@@ -1,0 +1,274 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-musl"]
+}
+
+// User Roles from backend.md
+enum Role {
+  STUDENT
+  STAFF
+}
+
+enum RefundType {
+  EQUIPMENT
+  CERTIFICATION
+  TRAVEL
+  OTHER
+}
+
+enum RefundStatus {
+  ESTIMATED
+  DECLINED
+  PENDING_RECEIPTS
+  VERIFIED_READY
+  READY_TO_PAY
+  FULLY_PAID
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  APPROVE
+  REJECT
+  UPLOAD
+}
+
+enum AllowanceEligibility {
+  UNREVIEWED
+  ELIGIBLE
+  NOT_ELIGIBLE
+}
+
+enum AllowancePaymentStatus {
+  PENDING
+  PROCESSED
+  PAID
+  NOT_APPLICABLE
+  EXCEPTION
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  emailVerified Boolean?
+  
+  // Custom fields
+  intraId       String?   @unique
+  login         String?   @unique
+  campus        String?
+  role          Role      @default(STUDENT)
+  
+  requests      RefundRequest[]
+  notifications Notification[]
+  sessions      Session[]
+  accounts      Account[]
+  auditLogs     AuditLog[]
+  workExperienceAllowance WorkExperienceAllowance?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@map("user")
+}
+
+model WorkExperienceAllowance {
+  id                  String               @id @default(cuid())
+  userId              String               @unique
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startDate           DateTime?
+  endDate             DateTime?
+  housingEligibility  AllowanceEligibility @default(UNREVIEWED)
+  cateringEligibility AllowanceEligibility @default(UNREVIEWED)
+  staffNotes          String?
+  monthlyRecords      WorkExperienceAllowanceMonth[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  @@index([startDate, endDate])
+  @@map("work_experience_allowance")
+}
+
+model WorkExperienceAllowanceMonth {
+  id                  String                    @id @default(cuid())
+  allowanceId         String
+  allowance           WorkExperienceAllowance  @relation(fields: [allowanceId], references: [id], onDelete: Cascade)
+  month               DateTime
+  housingApplicable   Boolean
+  cateringApplicable  Boolean
+  expectedAmount      Int
+  paymentStatus       AllowancePaymentStatus    @default(PENDING)
+  paymentDate         DateTime?
+  notes               String?
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+
+  @@unique([allowanceId, month])
+  @@index([paymentStatus])
+  @@map("work_experience_allowance_month")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verification")
+}
+
+model CertificateCatalog {
+  id        String   @id @default(cuid())
+  name      String
+  provider  String
+  fixedCost Float
+  currency  String   @default("USD")
+  active    Boolean  @default(true)
+  
+  requests  RefundRequest[] // Relation for analytics
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  action    AuditAction // Enum for type safety
+  entityId  String      // requestId
+  details   Json        // Dynamic details
+  createdAt DateTime    @default(now())
+
+  @@index([entityId])
+  @@index([userId])
+  @@map("audit_log")
+}
+
+model Receipt {
+  id              String        @id @default(cuid())
+  url             String
+  amount          Float         @default(0)// Editable amount per receipt
+  refundRequestId String
+  refundRequest   RefundRequest @relation(fields: [refundRequestId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model RefundRequest {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  
+  type        RefundType
+  
+  title       String
+  description String?
+  amountEst   Float        
+  amountFinal Float?       // Actual refunded amount set by staff
+  
+  // Relations
+  receipts           Receipt[]
+  
+  // New fields
+  targetDate         DateTime?
+  departure          String?
+  destination        String?
+  invoiceAddressedTo String?   // "LEET INITIATIVE" or "1337" or null
+  
+  // Cached total for performance (sum of receipts)
+  totalAmount        Float     @default(0) 
+
+  // Analytics Relation
+  certificateId      String?
+  certificate        CertificateCatalog? @relation(fields: [certificateId], references: [id])
+  
+  status      RefundStatus @default(ESTIMATED)
+  
+  staffNote   String?
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Indexes for performance
+  @@index([userId])
+  @@index([status])
+  @@index([certificateId]) // Index for popular certs query
+  
+  // Custom Receipt Number Logic
+  bonDeCaisseNumber Int?
+  bonDeCaisseYear   Int?
+  @@unique([bonDeCaisseNumber, bonDeCaisseYear])
+}
+
+enum NotificationType {
+  NEW_REQUEST
+  RECEIPT_UPLOADED
+  APPROVED
+  REJECTED
+  READY_TO_PAY
+  FULLY_PAID
+  INFO
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title     String
+  message   String
+  type      NotificationType
+  read      Boolean          @default(false)
+  
+  refundId  String?
+  
+  createdAt DateTime         @default(now())
+  
+  @@map("notification")
+}

@@ -1,0 +1,33 @@
+# Credentials and local environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Dependencies and generated output
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Runtime data and database backups
+backups/
+public/uploads/
+*.dump
+*.sql.gz
+*.sqlite
+*.sqlite3
+*.log
+
+# Local tooling
+.DS_Store
+.idea/
+.vscode/
+.vercel/
+tmp/
+.cache/

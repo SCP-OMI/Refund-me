@@ -1,0 +1,86 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: refund-med-db-dev
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: local_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: refund-med-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  app:
+    container_name: refund-med-dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/local_db
+      - DIRECT_URL=postgresql://postgres:postgres@db:5432/local_db
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3000:3000"
+      - "5555:5555" # Prisma Studio
+    volumes:
+      - uploads_data_dev:/app/public/uploads
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /app
+          ignore:
+            - node_modules/
+            - .next/
+            - .git/
+        - action: rebuild
+          path: package.json
+        - action: rebuild
+          path: .env
+        - action: rebuild
+          path: .env.example
+        - action: rebuild
+          path: prisma/schema.prisma
+        - action: rebuild
+          path: next.config.ts
+        - action: rebuild
+          path: tsconfig.json
+        - action: rebuild
+          path: eslint.config.mjs
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data_dev:
+  redis_data_dev:
+  uploads_data_dev:
+
+

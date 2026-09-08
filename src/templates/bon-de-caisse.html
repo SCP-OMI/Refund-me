@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Bon de Caisse</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
+        @font-face {
+            font-family: "Minion Pro";
+            font-style: normal;
+            font-weight: normal;
+            src: local("Minion Pro"), local("MinionPro-Regular"), sans-serif;
+        }
+
+        body,
+        div,
+        dl,
+        dt,
+        dd,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p,
+        pre,
+        code,
+        blockquote,
+        figure {
+            margin: 0;
+            padding: 0;
+            border-width: 0;
+            text-rendering: optimizeSpeed;
+        }
+
+        body {
+            /* A4 Pixel Dimensions at 96DPI: 794px x 1123px */
+            width: 794px;
+            height: 1123px;
+            background-color: white;
+            position: relative;
+        }
+
+        /* The main container acts as the A5 card */
+        .a5-container {
+            width: 595px;
+            height: 420px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            /* Scale 595px (72dpi A5) to ~794px (96dpi A5 width) */
+            /* 794 / 595 ~= 1.334 */
+            transform: scale(1.334);
+            transform-origin: top left;
+        }
+
+        div>svg {
+            position: absolute;
+        }
+
+        div.Basic-Text-Frame {
+            border-style: solid;
+        }
+
+        p.ParaOverride-1 {
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        /* Original Styles */
+        span.CharOverride-1-orig {
+            color: #000000;
+            font-family: Montserrat, sans-serif;
+            font-size: 480px;
+            font-style: normal;
+            font-weight: bold;
+        }
+
+        span.CharOverride-2-orig {
+            color: #000000;
+            font-family: Montserrat, sans-serif;
+            font-size: 240px;
+            font-style: normal;
+            font-weight: bold;
+        }
+
+        span.CharOverride-3-orig {
+            color: #000000;
+            font-family: Montserrat, sans-serif;
+            font-size: 139.9px;
+            font-style: normal;
+            font-weight: bold;
+        }
+
+        /* Fill-in Text Styles */
+        .fill-in-text {
+            color: #000000;
+            font-family: Montserrat, sans-serif;
+            font-weight: bold;
+            font-size: 200px;
+            position: absolute;
+            z-index: 10;
+            white-space: nowrap;
+            overflow: visible;
+        }
+
+        /* Container styles with transforms */
+        #_idContainer000 {
+            -ms-transform: translate(209.437px, 130.371px) rotate(0.000deg) skew(0.000deg) scale(1.000, 1.000);
+            -ms-transform-origin: 0% 0%;
+            -webkit-transform: translate(209.437px, 130.371px) rotate(0.000deg) skew(0.000deg) scale(1.000, 1.000);
+            -webkit-transform-origin: 0% 0%;
+            height: 34.59px;
+            left: 0px;
+            position: absolute;
+            top: 0px;
+            transform: translate(209.437px, 130.371px) rotate(0.000deg) skew(0.000deg) scale(1.000, 1.000);
+            transform-origin: 0% 0%;
+            width: 176.40px;
+        }
+
+        #_idContainer001 {
+            /* Date - aligned to the right */
+            -ms-transform: translate(400.000px, 102.067px) rotate(0.000deg) skew(0.000deg) scale(1.000, 1.000);
+            -ms-transform-origin: 0% 0%;
+            -webkit-transform: translate(400.000px, 102.067px) rotate(0.000deg) skew(0.000deg) scale(1.000, 1.000);
+            -webkit-transform-origin: 0% 0%;
+            height: 19.54px;
+            left: 0px;
+            position: absolute;
+            top: 0px;
+            transform: translate(400.000px, 102.067px) rotate(0.000deg) skew(0.000deg) scale(1.000, 1.000);
+            transform-origin: 0% 0%;
+            width: 150.00px;
+        }
+
+        #_idContainer002 {
+            /* Receipt Number - Moved to RIGHT side (x=400px) */
+            -ms-transform: translate(400.000px, 116.812px) rotate(0.000deg) skew(0.000deg) scale(1.000, 1.000);
+            -ms-transform-origin: 0% 0%;
+            -webkit-transform: translate(400.000px, 116.812px) rotate(0.000deg) skew(0.000deg) scale(1.000, 1.000);
+            -webkit-transform-origin: 0% 0%;
+            height: 21.10px;
+            left: 0px;
+            position: absolute;
+            top: 0px;
+            transform: translate(400.000px, 116.812px) rotate(0.000deg) skew(0.000deg) scale(1.000, 1.000);
+            transform-origin: 0% 0%;
+            width: 150.00px;
+        }
+
+        #_idContainer003 {
+            -ms-transform: translate(36.000px, 170.023px) rotate(0.000deg) skew(0.000deg) scale(1.000, 1.000);
+            -ms-transform-origin: 0% 0%;
+            -webkit-transform: translate(36.000px, 170.023px) rotate(0.000deg) skew(0.000deg) scale(1.000, 1.000);
+            -webkit-transform-origin: 0% 0%;
+            height: 151.54px;
+            left: 0px;
+            position: absolute;
+            top: 0px;
+            transform: translate(36.000px, 170.023px) rotate(0.000deg) skew(0.000deg) scale(1.000, 1.000);
+            transform-origin: 0% 0%;
+            width: 523.28px;
+        }
+
+        #_idContainer004 {
+            -ms-transform: translate(36.000px, 312.267px) rotate(0.000deg) skew(0.000deg) scale(1.000, 1.000);
+            -ms-transform-origin: 0% 0%;
+            -webkit-transform: translate(36.000px, 312.267px) rotate(0.000deg) skew(0.000deg) scale(1.000, 1.000);
+            -webkit-transform-origin: 0% 0%;
+            height: 19.54px;
+            left: 0px;
+            position: absolute;
+            top: 0px;
+            transform: translate(36.000px, 312.267px) rotate(0.000deg) skew(0.000deg) scale(1.000, 1.000);
+            transform-origin: 0% 0%;
+            width: 523.28px;
+        }
+
+        #_idContainer005 {
+            -ms-transform: translate(-3.000px, 16.963px) rotate(0.000deg) skew(0.000deg) scale(1.000, 1.000);
+            -ms-transform-origin: 0% 0%;
+            -webkit-transform: translate(-3.000px, 16.963px) rotate(0.000deg) skew(0.000deg) scale(1.000, 1.000);
+            -webkit-transform-origin: 0% 0%;
+            height: 841.92px;
+            left: 0px;
+            position: absolute;
+            top: 0px;
+            transform: translate(-3.000px, 16.963px) rotate(0.000deg) skew(0.000deg) scale(1.000, 1.000);
+            transform-origin: 0% 0%;
+            width: 595.20px;
+        }
+
+        img._idGenObjectAttribute-1 {
+            height: 100.00%;
+            min-width: 100%;
+            width: 100.00%;
+        }
+
+        img._idGenObjectAttribute-2 {
+            left: 0px;
+            position: absolute;
+            top: 0px;
+        }
+    </style>
+</head>
+
+<body id="publication">
+    <div class="a5-container">
+        <!-- Background Image -->
+        <div
+            style="position:absolute;overflow:hidden;left:0px;top:0px;-webkit-transform:translate(0.00px,0.00px);-ms-transform:translate(0.00px,0.00px);transform:translate(0.00px,0.00px);width:595.28px;height:419.53px;background-color:white; z-index: -1;">
+            <div id="_idContainer005">
+                <img class="_idGenObjectAttribute-1 _idGenObjectAttribute-2"
+                    src="data:image/png;base64,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AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNP0zc2sAABITSURBVAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIByQgMAACgnNAAAgHJCAwAAKCc0AACAckIDAAAoJzQAAIBy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"
+                    alt="" />
+            </div>
+        </div>
+
+        <div
+            style="position:absolute;overflow:hidden;left:0px;top:0px;-webkit-transform:translate(0.00px,0.00px);-ms-transform:translate(0.00px,0.00px);transform:translate(0.00px,0.00px);width:595.28px;height:419.53px;background-color:transparent">
+
+            <!-- Header: Bon de Caisse -->
+            <div id="_idContainer000" class="Basic-Text-Frame">
+                <div
+                    style="width:0px;height:0px;position:absolute;top:0px;left:0px;-webkit-transform-origin: 0% 0%; -webkit-transform: translate(0px,3.59px) rotate(0deg) scale(0.05);transform-origin: 0% 0%; transform: translate(0px,3.59px) rotate(0deg) scale(0.05);">
+                    <p class="Basic-Paragraph ParaOverride-1">
+                        <span class="CharOverride-1-orig" style="position:absolute;top:52.55px;left:0px;">Bon </span>
+                        <span class="CharOverride-1-orig" style="position:absolute;top:52.55px;left:1149.11px;">de
+                        </span>
+                        <span class="CharOverride-1-orig"
+                            style="position:absolute;top:52.55px;left:1919.98px;letter-spacing:-0.32px;">Caisse</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Location and Date -->
+            <div id="_idContainer001">
+                <div
+                    style="width:0px;height:0px;position:absolute;top:0px;left:0px;-webkit-transform-origin: 0% 0%; -webkit-transform: translate(0px,2.3px) rotate(0deg) scale(0.05);transform-origin: 0% 0%; transform: translate(0px,2.3px) rotate(0deg) scale(0.05);">
+                    <p class="Basic-Paragraph ParaOverride-1">
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:26.28px;left:0px;letter-spacing:-2.16px;">Date </span>
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:26.28px;left:1090.79px;letter-spacing:0.87px;">......................</span>
+
+                        <!-- Date Overlay -->
+                        <span class="fill-in-text" style="top:-20px; left:1250px;">{{DATE}}</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Receipt Number -->
+            <div id="_idContainer002">
+                <div
+                    style="width:0px;height:0px;position:absolute;top:0px;left:0px;-webkit-transform-origin: 0% 0%; -webkit-transform: translate(0px,3.8px) rotate(0deg) scale(0.05);transform-origin: 0% 0%; transform: translate(0px,3.8px) rotate(0deg) scale(0.05);">
+                    <p class="Basic-Paragraph ParaOverride-1">
+                        <span class="CharOverride-2-orig" style="position:absolute;top:26.28px;left:0px;">N</span>
+                        <span class="CharOverride-3-orig" style="position:absolute;top:32.28px;left:193.92px;">o </span>
+                        <span class="CharOverride-2-orig" style="position:absolute;top:26.28px;left:325.16px;">: </span>
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:26.28px;left:455.96px;letter-spacing:-0.16px;">{{RECEIPT_NUMBER}}</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div id="_idContainer003">
+                <div
+                    style="width:0px;height:0px;position:absolute;top:0px;left:0px;-webkit-transform-origin: 0% 0%; -webkit-transform: translate(0px,2.3px) rotate(0deg) scale(0.05);transform-origin: 0% 0%; transform: translate(0px,2.3px) rotate(0deg) scale(0.05);">
+                    <!-- Name -->
+                    <p class="Basic-Paragraph ParaOverride-1">
+                        <span class="CharOverride-2-orig" style="position:absolute;top:26.28px;left:0px;">Je </span>
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:26.28px;left:349.19px;letter-spacing:0.14px;">soussigné </span>
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:26.28px;left:1680.46px;">(e)</span>
+                        <span class="CharOverride-3-orig" style="position:absolute;top:32.28px;left:2003.49px;"> </span>
+                        <span class="CharOverride-2-orig" style="position:absolute;top:26.28px;left:2043.09px;"> </span>
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:26.28px;left:2111.01px;letter-spacing:0px;">...................................................................................................................................</span>
+
+                        <!-- Name Overlay -->
+                        <span class="fill-in-text" style="top:-20px; left:2120px;">{{FULL_NAME}}</span>
+                    </p>
+
+                    <!-- CIN -->
+                    <p class="Basic-Paragraph ParaOverride-1">
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:486.28px;left:0px;letter-spacing:-0.5px;">Titulaire </span>
+                        <span class="CharOverride-2-orig" style="position:absolute;top:486.28px;left:1100.15px;">de
+                        </span>
+                        <span class="CharOverride-2-orig" style="position:absolute;top:486.28px;left:1485.59px;">la
+                        </span>
+                        <span class="CharOverride-2-orig" style="position:absolute;top:486.28px;left:1773.82px;">CIN
+                        </span>
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:486.28px;left:2290.29px;">N</span>
+                        <span class="CharOverride-3-orig" style="position:absolute;top:492.28px;left:2484.21px;">o
+                        </span>
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:486.28px;left:2615.45px;letter-spacing:0px;">...........................................................................................................................</span>
+
+                        <!-- CIN Overlay -->
+                        <span class="fill-in-text" style="top:440px; left:2620px;">{{CIN_NUMBER}}</span>
+                    </p>
+
+                    <!-- Amount -->
+                    <p class="Basic-Paragraph ParaOverride-1">
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:946.28px;left:0px;letter-spacing:0.03px;">certife </span>
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:946.28px;left:885.83px;letter-spacing:-1px;">avoir </span>
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:946.28px;left:1572.23px;letter-spacing:-0.43px;">reçu </span>
+                        <span class="CharOverride-2-orig" style="position:absolute;top:946.28px;left:2199.58px;">la
+                        </span>
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:946.28px;left:2487.82px;letter-spacing:0.24px;">somme </span>
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:946.28px;left:3496.77px;">.............................................................................................................</span>
+
+                        <!-- Amount Overlay -->
+                        <span class="fill-in-text" style="top:900px; left:3500px;">{{AMOUNT}}</span>
+                    </p>
+
+                    <!-- Amount Words -->
+                    <p class="Basic-Paragraph ParaOverride-1">
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:1406.28px;left:0px;">(...................................................................................................................................................................)</span>
+
+                        <!-- Amount Words Overlay -->
+                        <span class="fill-in-text" style="top:1360px; left:100px;">{{AMOUNT_WORDS}}</span>
+                    </p>
+
+                    <!-- Object -->
+                    <p class="Basic-Paragraph ParaOverride-1">
+                        <span class="CharOverride-2-orig" style="position:absolute;top:1866.28px;left:0px;">Objet:
+                        </span>
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:1866.28px;left:828.47px;">.........................................................................................................................................................</span>
+
+                        <!-- Object Overlay -->
+                        <span class="fill-in-text" style="top:1820px; left:840px;">{{OBJECT}}</span>
+                    </p>
+
+                    <!-- Description -->
+                    <p class="Basic-Paragraph ParaOverride-1">
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:2326.28px;left:0px;">......................................................................................................................................................................</span>
+
+                        <!-- Description Overlay -->
+                        <span class="fill-in-text" style="top:2280px; left:0px;">{{DESCRIPTION}}</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Footer: Signatures -->
+            <div id="_idContainer004" class="Basic-Text-Frame">
+                <div
+                    style="width:0px;height:0px;position:absolute;top:0px;left:0px;-webkit-transform-origin: 0% 0%; -webkit-transform: translate(0px,2.3px) rotate(0deg) scale(0.05);transform-origin: 0% 0%; transform: translate(0px,2.3px) rotate(0deg) scale(0.05);">
+                    <p class="Basic-Paragraph ParaOverride-1">
+                        <span class="CharOverride-2-orig" style="position:absolute;top:26.28px;left:0px;"> </span>
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:26.28px;left:271.67px;letter-spacing:-1.1px;">Ventilation
+                        </span>
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:26.28px;left:1719.33px;letter-spacing:-0.46px;">Comptable
+                        </span>
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:26.28px;left:8123.75px;letter-spacing:-0.32px;">Le </span>
+                        <span class="CharOverride-2-orig"
+                            style="position:absolute;top:26.28px;left:8487.11px;text-rendering:optimizeLegibility;letter-spacing:-0.06px;">bénéficiaire</span>
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+
+</html>
