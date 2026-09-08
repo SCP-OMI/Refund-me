@@ -1,7 +1,7 @@
 "use client"
 
 import { signIn } from "@/lib/auth-client"
-import { ArrowRight, CheckCircle2, Loader2, ReceiptText, ShieldCheck, X } from "lucide-react"
+import { CheckCircle2, Loader2, ReceiptText, ShieldCheck, X } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useState } from "react"
 
@@ -69,7 +69,7 @@ function LoginContent() {
             </div>
           )}
           <button className="auth-button" type="button" onClick={handleSignIn} disabled={isSigningIn}>
-            {isSigningIn ? <><Loader2 className="auth-spinner" aria-hidden="true" /> Connecting…</> : <>Continue with 42 <ArrowRight aria-hidden="true" /></>}
+            {isSigningIn ? <><Loader2 className="auth-spinner" aria-hidden="true" /> Connecting…</> : "Continue with 42"}
           </button>
           <p className="auth-privacy">Authentication is securely handled by 42. We never see your password.</p>
         </div>
