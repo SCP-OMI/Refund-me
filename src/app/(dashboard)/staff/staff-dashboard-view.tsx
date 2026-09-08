@@ -269,12 +269,20 @@ export function StaffDashboardView({ initialData, initialCounts }: StaffDashboar
                         Validation: 'Validation',
                         Processing: 'receipts',
                         Completed: 'payouts',
+                        // 'FullyPaid' was missing, so this tab never showed its
+                        // count even though `counts.fullyPaid` is provided.
+                        FullyPaid: 'fullyPaid',
                         Fails: 'fails'
                     }
                     const count = counts[countMap[tab.id]] || 0
-                    
-                    // For FullyPaid tab, show today's amount
-                    const showTodayAmount = tab.id === 'FullyPaid' && todaysPaidAmount && todaysPaidAmount > 0
+
+                    // For FullyPaid, today's payout total stands in for a count.
+                    // `tab.id === 'FullyPaid' && todaysPaidAmount` returns the
+                    // number 0 when nothing was paid today, and React renders a
+                    // 0 as text — which is why this tab read "Fully Paid0".
+                    const showTodayAmount = Boolean(
+                        tab.id === 'FullyPaid' && todaysPaidAmount && todaysPaidAmount > 0
+                    )
                     
                     return (
                         <button
@@ -282,21 +290,13 @@ export function StaffDashboardView({ initialData, initialCounts }: StaffDashboar
                             className="staff-tab"
                             data-active={isActive}
                             onClick={() => handleTabChange(tab.id)}
-                            style={{
-                                backgroundColor: isActive ? 'white' : 'transparent',
-                                color: isActive ? '#18181b' : '#71717a',
-                                boxShadow: isActive ? '0 1px 2px 0 rgb(0 0 0 / 0.05)' : 'none',
-                                opacity: isPending && !isActive ? 0.5 : 1
-                            }}
+                            style={{ opacity: isPending && !isActive ? 0.5 : 1 }}
                         >
                             {tab.label}
                             {showTodayAmount && (
                                 <span
                                     className="staff-tab-badge"
-                                    style={{
-                                        backgroundColor: isActive ? '#16a34a' : '#dcfce7',
-                                        color: isActive ? 'white' : '#166534'
-                                    }}
+
                                 >
                                     {todaysPaidAmount.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} DH Today
                                 </span>
@@ -304,10 +304,7 @@ export function StaffDashboardView({ initialData, initialCounts }: StaffDashboar
                             {!showTodayAmount && count > 0 && (
                                 <span
                                     className="staff-tab-badge"
-                                    style={{
-                                        backgroundColor: isActive ? '#18181b' : '#e4e4e7',
-                                        color: isActive ? 'white' : '#71717a'
-                                    }}
+
                                 >
                                     {count}
                                 </span>
@@ -716,9 +713,9 @@ function InboxCard({ request, type }: { request: RefundRequest, type: 'estimate'
             doc.setTextColor(0, 0, 0)
             doc.text('Amount:', margin + 5, yPos + 12)
 
-            // Use totalAmount if available, otherwise estimate. Show USD for certifications, DH otherwise
+            // Use totalAmount when receipts have been evaluated, else the estimate.
             const displayAmount = (request.totalAmount && request.totalAmount > 0) ? request.totalAmount : request.amountEst
-            const displayCurrency = request.type === 'CERTIFICATION' ? 'USD' : 'DH'
+            const displayCurrency = 'MAD'
             doc.setFontSize(14)
             doc.text(`${displayAmount.toFixed(2)} ${displayCurrency}`, pageWidth - margin - 5, yPos + 12, { align: 'right' })
 
@@ -1026,19 +1023,26 @@ function InboxCard({ request, type }: { request: RefundRequest, type: 'estimate'
                     gap: '1rem'
                 }}>
                     <div style={{ textAlign: (mounted && isMobile) ? 'left' : 'right' }}>
-                        <div style={{ fontWeight: 600, color: '#18181b', fontSize: (mounted && isMobile) ? '1rem' : '1.125rem' }}>
-                            {(request.totalAmount && request.totalAmount > 0)
-                                ? request.totalAmount.toFixed(2)
-                                : request.amountEst.toFixed(2)
-                            } <span style={{ color: '#71717a', fontSize: (mounted && isMobile) ? '0.8125rem' : '0.875rem', fontWeight: 500 }}>
-                                {request.type === 'CERTIFICATION' ? 'USD' : 'DH'}
-                            </span>
-                            {(!request.totalAmount || request.totalAmount === 0) && (
-                                <span style={{ color: '#a1a1aa', fontSize: '0.6875rem', fontWeight: 400, marginLeft: '0.375rem' }}>(estimated)</span>
-                            )}
+                        {/* The amount is what a reviewer is deciding about, so
+                            it is tabular mono and gets the line to itself; the
+                            currency and qualifier sit under it rather than
+                            running on after it. */}
+                        <div
+                            className="tnum"
+                            style={{ fontWeight: 600, color: 'var(--ink)', fontSize: (mounted && isMobile) ? '1.125rem' : '1.375rem', lineHeight: 1.1, letterSpacing: '-0.015em' }}
+                        >
+                            {((request.totalAmount && request.totalAmount > 0)
+                                ? request.totalAmount
+                                : request.amountEst
+                            ).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: (mounted && isMobile) ? 'flex-start' : 'flex-end', gap: '0.375rem', fontSize: '0.75rem', color: '#71717a', marginTop: '0.125rem' }} suppressHydrationWarning>
-                            <Calendar style={{ width: '0.75rem', height: '0.75rem' }} />
+                        <div
+                            style={{ marginTop: '0.2rem', color: 'var(--quiet)', fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '0.04em', textTransform: 'uppercase' }}
+                            suppressHydrationWarning
+                        >
+                            MAD
+                            {(!request.totalAmount || request.totalAmount === 0) ? ' · estimated' : ''}
+                            {' · '}
                             {new Date(request.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </div>
                     </div>
@@ -1201,21 +1205,17 @@ function InboxCard({ request, type }: { request: RefundRequest, type: 'estimate'
                         </div>
                     )}
 
-                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-                        <div
-                            style={{
-                                padding: '0.5rem',
-                                borderRadius: '0.375rem',
-                                backgroundColor: '#f4f4f5'
-                            }}
-                        >
-                            <FileText style={{ width: '1rem', height: '1rem', color: '#71717a' }} />
-                        </div>
+                    {/* One sentence of prose. It used to sit in a tinted panel
+                        behind an icon chip, inside a card — three frames to
+                        present a single line the reviewer needs to read. */}
+                    {request.description ? (
                         <div>
-                            <p style={{ marginBottom: '0.25rem', fontWeight: 500, color: '#18181b' }}>Description:</p>
-                            <span>{request.description}</span>
+                            <p className="plate" style={{ marginBottom: '0.3rem' }}>What it is for</p>
+                            <p style={{ margin: 0, maxWidth: '72ch', color: 'var(--ink-soft)', fontSize: '0.875rem', lineHeight: 1.5 }}>
+                                {request.description}
+                            </p>
                         </div>
-                    </div>
+                    ) : null}
 
                     {/* Receipt Status/Preview Section */}
                     {request.status === 'PENDING_RECEIPTS' && (!request.receipts || request.receipts.length === 0) ? (
@@ -1484,7 +1484,7 @@ function InboxCard({ request, type }: { request: RefundRequest, type: 'estimate'
                                     )}
                                     <span><small>Submitted by</small><strong>{request.user.name || 'Unknown student'}</strong><em>{request.user.email}</em></span>
                                 </div>
-                                <div><ReceiptText /><span><small>Amount</small><strong>{((request.totalAmount && request.totalAmount > 0) ? request.totalAmount : request.amountEst).toFixed(2)} {request.type === 'CERTIFICATION' ? 'USD' : 'DH'}</strong><em>{request.totalAmount ? 'Final amount' : 'Estimated amount'}</em></span></div>
+                                <div><ReceiptText /><span><small>Amount</small><strong>{((request.totalAmount && request.totalAmount > 0) ? request.totalAmount : request.amountEst).toFixed(2)} {'MAD'}</strong><em>{request.totalAmount ? 'Final amount' : 'Estimated amount'}</em></span></div>
                                 <div><FileText /><span><small>Category</small><strong>{request.type.replaceAll('_', ' ')}</strong><em>{request.status.replaceAll('_', ' ')}</em></span></div>
                                 {(request.departure || request.destination) && (
                                     <div><MapPin /><span><small>Route</small><strong>{request.departure || '—'} → {request.destination || '—'}</strong><em>Travel details</em></span></div>
@@ -1697,7 +1697,7 @@ function InboxCard({ request, type }: { request: RefundRequest, type: 'estimate'
                                 {request.title}
                             </p>
                             <p style={{ color: '#71717a', fontSize: '0.8125rem' }}>
-                                {request.user?.name || request.user?.email} • Estimated: {request.amountEst.toFixed(2)} {request.type === 'CERTIFICATION' ? 'USD' : 'DH'}
+                                {request.user?.name || request.user?.email} • Estimated: {request.amountEst.toFixed(2)} {'MAD'}
                                 {receiptTotal > 0 && (
                                     <> • Receipt Total: <span style={{ fontWeight: 600, color: '#18181b' }}>{receiptTotal.toFixed(2)}</span> DH</>
                                 )}

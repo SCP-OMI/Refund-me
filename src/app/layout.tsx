@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans, IBM_Plex_Sans_Condensed } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/query-provider";
 
-const plexSans = IBM_Plex_Sans({
+const geistSans = Geist({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-plex-sans",
+  display: "swap",
+  variable: "--font-geist-sans",
 });
 
-const plexCondensed = IBM_Plex_Sans_Condensed({
+/* Anything the system generated — an amount, a reference, a date, a count —
+   is set in mono, so figures line up down a column. */
+const geistMono = Geist_Mono({
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-plex-condensed",
+  display: "swap",
+  variable: "--font-geist-mono",
 });
 
 export const metadata: Metadata = {
@@ -26,9 +28,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning style={{ overflowX: 'hidden' }}>
-      <body 
-        className={`${plexSans.variable} ${plexCondensed.variable}`} 
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable}`}
+      style={{ overflowX: 'hidden' }}
+    >
+      <body
         suppressHydrationWarning
         style={{ 
           margin: 0, 

@@ -25,8 +25,21 @@ export function ClientStudentDashboard({
 
     const activeRequests = result.data.filter((r: RefundRequest) => r.status !== "READY_TO_PAY" && r.status !== "FULLY_PAID" && r.status !== "DECLINED")
 
+    // Amounts are stored without a currency, so they are all campus currency.
+    // The card used to guess "USD" from the request type, which then got added
+    // into a total labelled "DH".
     const totalActive = activeRequests.reduce((sum: number, req: RefundRequest) => sum + req.amountEst, 0)
     const pendingAction = activeRequests.filter((r: RefundRequest) => r.status === "PENDING_RECEIPTS" || r.status === "ESTIMATED").length
+
+    // A student wants to know what to do next, not which internal status a
+    // claim sits in. Two groups answer that; a single "In motion" pile did not.
+    const needsYou = activeRequests.filter((r: RefundRequest) => r.status === "PENDING_RECEIPTS" && r.receipts.length === 0)
+    const withFinance = activeRequests.filter((r: RefundRequest) => !needsYou.includes(r))
+
+    const groups = [
+        { key: "needs-you", label: "Needs your receipts", items: needsYou },
+        { key: "with-finance", label: "With finance", items: withFinance },
+    ].filter((g) => g.items.length > 0)
 
     return (
         <div className="student-dashboard">
@@ -35,51 +48,46 @@ export function ClientStudentDashboard({
                 pendingAction={pendingAction}
             />
 
-            <section className="active-requests">
-                <header className="section-heading">
-                    <div>
-                        <h2>In motion</h2>
-                        <p>Open requests, ordered by their latest update.</p>
-                    </div>
-                    <span>
-                        {activeRequests.length} request{activeRequests.length !== 1 ? 's' : ''}
-                    </span>
-                </header>
-
-                {activeRequests.length > 0 ? (
-                    <div className="request-grid">
-                        {activeRequests.map((req: RefundRequest) => {
-                            // Calculate total amount from receipts that have been evaluated (amount > 0)
-                            const evaluatedReceiptTotal = req.receipts.reduce((sum, receipt) => sum + (receipt.amount || 0), 0)
-                            return (
-                                <ActiveRequestCard
-                                    key={req.id}
-                                    id={req.id}
-                                    title={req.title}
-                                    amount={req.amountEst}
-                                    date={new Date(req.createdAt).toISOString()}
-                                    status={req.status as 'ESTIMATED' | 'DECLINED' | 'PENDING_RECEIPTS' | 'VERIFIED_READY' | 'READY_TO_PAY' | 'FULLY_PAID' | 'REJECTED'}
-                                    type={req.type}
-                                    receipts={req.receipts}
-                                    totalAmount={evaluatedReceiptTotal > 0 ? evaluatedReceiptTotal : undefined}
-                                    receiptsCount={req.receipts.length}
-                                />
-                            )
-                        })}
-                    </div>
-                ) : (
-                    <div className="empty-ledger">
-                        <Receipt aria-hidden="true" />
-                        <div>
-                            <h3>Your ledger is clear</h3>
-                            <p>Start a request when you have an eligible school expense.</p>
+            {activeRequests.length > 0 ? (
+                groups.map((group) => (
+                    <section key={group.key} className="claim-group">
+                        <header className="claim-group-head">
+                            <h2 className="plate">{group.label}</h2>
+                            <span className="tnum">{group.items.length}</span>
+                        </header>
+                        <div className="claim-list">
+                            {group.items.map((req: RefundRequest) => {
+                                const evaluatedReceiptTotal = req.receipts.reduce((sum, receipt) => sum + (receipt.amount || 0), 0)
+                                return (
+                                    <ActiveRequestCard
+                                        key={req.id}
+                                        id={req.id}
+                                        title={req.title}
+                                        amount={req.amountEst}
+                                        date={new Date(req.createdAt).toISOString()}
+                                        status={req.status as 'ESTIMATED' | 'DECLINED' | 'PENDING_RECEIPTS' | 'VERIFIED_READY' | 'READY_TO_PAY' | 'FULLY_PAID' | 'REJECTED'}
+                                        type={req.type}
+                                        receipts={req.receipts}
+                                        totalAmount={evaluatedReceiptTotal > 0 ? evaluatedReceiptTotal : undefined}
+                                        receiptsCount={req.receipts.length}
+                                    />
+                                )
+                            })}
                         </div>
-                        <Link href="/student/create">
-                            <Plus aria-hidden="true" /> Start a request
-                        </Link>
+                    </section>
+                ))
+            ) : (
+                <div className="empty-ledger">
+                    <Receipt aria-hidden="true" />
+                    <div>
+                        <h3>Nothing open</h3>
+                        <p>Start a claim when you have an eligible school expense.</p>
                     </div>
-                )}
-            </section>
+                    <Link href="/student/create">
+                        <Plus aria-hidden="true" /> Start a claim
+                    </Link>
+                </div>
+            )}
         </div>
     )
 }

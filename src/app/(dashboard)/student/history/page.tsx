@@ -29,7 +29,7 @@ export default async function HistoryPage() {
         </div>
         <div>
           <p>Reimbursed</p>
-          <strong>{totalReimbursed.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<span> DH</span></strong>
+          <strong>{totalReimbursed.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<span> MAD</span></strong>
         </div>
         <div data-attention={pendingCount > 0}>
           <p>Still moving</p>

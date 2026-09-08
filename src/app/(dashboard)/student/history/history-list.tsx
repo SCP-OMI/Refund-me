@@ -40,7 +40,7 @@ export function HistoryList({ initialData }: HistoryListProps) {
   return (
     <div>
       <h2 style={{ fontSize: '1rem', fontWeight: 500, color: '#18181b', marginBottom: '1rem' }}>
-        All Requests
+        All requests
       </h2>
 
       <div

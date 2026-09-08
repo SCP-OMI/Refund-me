@@ -20,7 +20,9 @@ export function HistoryItem({ request }: HistoryItemProps) {
     // Determine which amount to show and in which currency
     const totalAmountExists = request.totalAmount && request.totalAmount > 0
     const displayAmount = totalAmountExists ? request.totalAmount : request.amountEst
-    const currency = totalAmountExists ? 'DH' : (request.type === 'CERTIFICATION' ? 'USD' : 'DH')
+    // Amounts carry no currency in the schema, so they are all campus
+    // currency; the type-based 'USD' guess made totals inconsistent.
+    const currency = 'MAD'
     
     return (
         <Link
@@ -83,8 +85,11 @@ export function HistoryItem({ request }: HistoryItemProps) {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <span style={{ fontWeight: 500, color: '#18181b', fontSize: '0.9375rem' }}>
-                    {displayAmount.toFixed(2)} <span style={{ color: '#71717a', fontSize: '0.8125rem' }}>{currency}</span>
+                {/* Tabular mono with a thousands separator, so figures line up
+                    down the column and 16,490.00 reads as such. */}
+                <span className="tnum" style={{ fontWeight: 600, color: 'var(--ink)', fontSize: '1rem', letterSpacing: '-0.01em' }}>
+                    {displayAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <span style={{ marginLeft: '0.35rem', color: 'var(--quiet)', fontSize: '0.625rem', letterSpacing: '0.04em' }}>{currency}</span>
                 </span>
                 <ChevronRight style={{ width: '1.125rem', height: '1.125rem', color: '#a1a1aa' }} />
             </div>
