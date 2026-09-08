@@ -4,7 +4,12 @@ import {
   getRabatAllowanceStudents,
   updateWorkExperienceAllowance,
 } from "@/actions/work-experience-allowance"
-import { Badge } from "@/components/ui/badge"
+import {
+  ELIGIBILITY_LABEL,
+  PaymentMark,
+  PhaseMark,
+  formatAllowanceAmount,
+} from "@/components/staff/allowance-ui"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -26,7 +31,7 @@ import {
   monthlyAllowanceAmount,
   workExperienceStatus,
 } from "@/lib/work-experience-allowance"
-import { AlertTriangle, BriefcaseBusiness, CheckCircle2, Search } from "lucide-react"
+import { Search } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMemo, useState, useTransition } from "react"
@@ -71,18 +76,7 @@ function currentPayment(student: Student) {
   return records.find((record) => record.month.startsWith(key)) ?? records.at(-1) ?? null
 }
 
-function StatusBadge({ status }: { status: ReturnType<typeof workExperienceStatus> }) {
-  const styles = {
-    ACTIVE: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    NOT_STARTED: "border-amber-200 bg-amber-50 text-amber-700",
-    ENDED: "border-zinc-200 bg-zinc-100 text-zinc-700",
-  }
-  return (
-    <Badge variant="outline" className={styles[status]}>
-      {status === "ACTIVE" ? "Active" : status === "ENDED" ? "Ended" : "Not started"}
-    </Badge>
-  )
-}
+
 
 function EligibilitySelect({
   value,
@@ -101,9 +95,9 @@ function EligibilitySelect({
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="UNREVIEWED">Unreviewed</SelectItem>
-        <SelectItem value="ELIGIBLE">Eligible</SelectItem>
-        <SelectItem value="NOT_ELIGIBLE">Not eligible</SelectItem>
+        <SelectItem value="UNREVIEWED">{ELIGIBILITY_LABEL.UNREVIEWED}</SelectItem>
+        <SelectItem value="ELIGIBLE">{ELIGIBILITY_LABEL.ELIGIBLE}</SelectItem>
+        <SelectItem value="NOT_ELIGIBLE">{ELIGIBILITY_LABEL.NOT_ELIGIBLE}</SelectItem>
       </SelectContent>
     </Select>
   )
@@ -182,25 +176,28 @@ export function WorkExperienceDashboard({ initialStudents }: { initialStudents: 
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-3">
-        {[
-          { label: "Active now", value: counts.active, icon: BriefcaseBusiness },
-          { label: "Needs review", value: counts.unreviewed, icon: AlertTriangle },
-          { label: "Payment pending", value: counts.pending, icon: CheckCircle2 },
-        ].map((item) => (
-          <div key={item.label} className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between text-sm text-zinc-600">
-              {item.label}<item.icon className="size-4" />
-            </div>
-            <p className="mt-2 text-2xl font-semibold text-zinc-950">{item.value}</p>
-          </div>
-        ))}
-      </div>
+      {/* The same ruled reading strip the student ledger uses. Three bordered
+          cards with a decorative briefcase, warning triangle and tick spent
+          three icons on three numbers. */}
+      <section className="ledger-strip" aria-label="Allowance summary">
+        <div>
+          <p className="plate">On placement</p>
+          <strong className="tnum">{counts.active}</strong>
+        </div>
+        <div data-attention={counts.unreviewed > 0}>
+          <p className="plate">Awaiting a decision</p>
+          <strong className="tnum">{counts.unreviewed}</strong>
+        </div>
+        <div data-attention={counts.pending > 0}>
+          <p className="plate">Payment due</p>
+          <strong className="tnum">{counts.pending}</strong>
+        </div>
+      </section>
 
-      <div className="rounded-xl border border-zinc-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-zinc-200 p-4 sm:flex-row sm:items-center">
+      <div className="rounded-md border border-border bg-card">
+        <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by student name or login" className="pl-9" />
           </div>
           <Select value={filter} onValueChange={(value) => setFilter(value as Filter)}>
@@ -210,7 +207,7 @@ export function WorkExperienceDashboard({ initialStudents }: { initialStudents: 
             </SelectContent>
           </Select>
         </div>
-        {error && <div className="border-b border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+        {error && <div className="border-b border-border px-4 py-3 text-sm text-destructive">{error}</div>}
 
         <div className="overflow-x-auto">
           <Table>
@@ -235,15 +232,18 @@ export function WorkExperienceDashboard({ initialStudents }: { initialStudents: 
                 return (
                   <TableRow key={student.id} className="align-top">
                     <TableCell>
-                      <Link href={`/staff/work-experience/${student.id}`} className="font-medium text-zinc-950 hover:text-emerald-700 hover:underline">
+                      <Link href={`/staff/work-experience/${student.id}`} className="font-medium text-foreground underline-offset-4 hover:underline">
                         {student.name || student.login || "Unnamed student"}
                       </Link>
-                      <div className="text-xs text-zinc-500">{student.login ? `@${student.login}` : student.email}</div>
-                      <div className="mt-1 text-xs text-zinc-400">{student.campus}</div>
+                      {/* Campus was printed on every row of a page that is
+                          Rabat-only by definition. */}
+                      <div className="mt-0.5 font-mono text-[0.6875rem] text-muted-foreground">
+                        {student.login ? `@${student.login}` : student.email}
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={status} />
-                      <div className="mt-2 text-xs text-zinc-500">
+                      <PhaseMark phase={status} />
+                      <div className="mt-1 font-mono text-[0.6875rem] text-muted-foreground">
                         {allowance?.startDate && allowance.endDate
                           ? `${dateFormatter.format(new Date(allowance.startDate))} – ${dateFormatter.format(new Date(allowance.endDate))}`
                           : "Dates require attention"}
@@ -251,22 +251,29 @@ export function WorkExperienceDashboard({ initialStudents }: { initialStudents: 
                     </TableCell>
                     <TableCell><EligibilitySelect label={`Housing eligibility for ${student.name}`} value={housing} disabled={isPending && updatingId === student.id} onChange={(value) => changeEligibility(student, "housingEligibility", value)} /></TableCell>
                     <TableCell><EligibilitySelect label={`Catering eligibility for ${student.name}`} value={catering} disabled={isPending && updatingId === student.id} onChange={(value) => changeEligibility(student, "cateringEligibility", value)} /></TableCell>
-                    <TableCell className="text-right font-semibold tabular-nums">{moneyFormatter.format(monthlyAllowanceAmount(housing, catering))} MAD</TableCell>
-                    <TableCell>
-                      {payment ? <Badge variant="outline" className="capitalize">{payment.paymentStatus.toLowerCase().replace("_", " ")}</Badge> : <span className="text-sm text-zinc-400">No months</span>}
+                    <TableCell className="text-right">
+                      {formatAllowanceAmount(monthlyAllowanceAmount(housing, catering), housing, catering) ? (
+                        <span className="tnum font-semibold">
+                          {moneyFormatter.format(monthlyAllowanceAmount(housing, catering))}
+                          <span className="ml-1.5 font-mono text-[0.625rem] font-normal text-muted-foreground">MAD</span>
+                        </span>
+                      ) : (
+                        <span className="font-mono text-[0.6875rem] text-muted-foreground">Not set</span>
+                      )}
                     </TableCell>
-                    <TableCell className="max-w-48 whitespace-normal text-sm text-zinc-600">
+                    <TableCell>
+                      {payment ? <PaymentMark status={payment.paymentStatus} /> : <span className="font-mono text-[0.6875rem] text-muted-foreground">No months</span>}
+                    </TableCell>
+                    {/* "Updated <date>" rode along on every row and told a
+                        reviewer nothing they could act on; it lives on the
+                        student's own page instead. */}
+                    <TableCell className="max-w-64 whitespace-normal text-sm text-muted-foreground">
                       {allowance?.staffNotes || "—"}
-                      <div className="mt-1 text-xs text-zinc-400">
-                        {allowance
-                          ? `Updated ${dateFormatter.format(new Date(allowance.updatedAt))}`
-                          : "Not reviewed"}
-                      </div>
                     </TableCell>
                   </TableRow>
                 )
               })}
-              {!filtered.length && <TableRow><TableCell colSpan={7} className="h-32 text-center text-zinc-500">No Rabat students match these filters.</TableCell></TableRow>}
+              {!filtered.length && <TableRow><TableCell colSpan={7} className="h-28 text-sm text-muted-foreground">No Rabat student matches these filters.</TableCell></TableRow>}
             </TableBody>
           </Table>
         </div>

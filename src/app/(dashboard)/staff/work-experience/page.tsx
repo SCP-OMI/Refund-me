@@ -5,17 +5,21 @@ export default async function WorkExperienceAllowancePage() {
   const students = await getRabatAllowanceStudents()
 
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-sm font-medium text-emerald-700">1337 Rabat · Staff only</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">
-          Work Experience Allowance
-        </h1>
-        <p className="mt-1 max-w-3xl text-sm text-zinc-600">
-          Review housing and catering eligibility and follow monthly payments for
-          students completing Work Experience I.
-        </p>
+    <div className="page-shell allowance-screen">
+      {/* Uses the shared page heading so this screen sits in the same frame as
+          the review queue and analytics. It previously rolled its own smaller
+          heading with a teal eyebrow, which read as a different product. */}
+      <div className="page-heading">
+        <div>
+          <h1>Work experience</h1>
+          <p>
+            Decide housing and catering eligibility, then follow the monthly
+            allowance through to payment.
+          </p>
+        </div>
+        <span className="page-heading-note">Rabat · staff only</span>
       </div>
+
       <WorkExperienceDashboard initialStudents={students} />
     </div>
   )

@@ -1,6 +1,48 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind v4. The v3 `@tailwind base/components/utilities` directives this
+   file used are not recognised by v4, so no utility ever compiled — which is
+   why the utility-built screens (work experience, request detail) and the
+   shadcn primitives rendered unstyled. */
+@import "tailwindcss";
+
+/* Map the existing shadcn-style tokens onto Tailwind's theme so `bg-card`,
+   `text-muted-foreground`, `border-input` and friends resolve to the same
+   values the bespoke CSS uses. `inline` keeps them as references rather than
+   copies, so changing a token in :root still moves everything. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Money state, so utility-built screens can reach the same four colours. */
+  --color-state-waiting: var(--waiting);
+  --color-state-review: var(--review);
+  --color-state-paid: var(--success);
+  --color-state-refused: var(--refused);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-sm: 0.125rem;
+  --radius-md: 0.1875rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.3125rem;
+}
 
 /* Base tokens consumed by Tailwind and the shared UI primitives. */
 
@@ -642,6 +684,46 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   font-variant-numeric: tabular-nums;
 }
 .staff-tab[data-active="true"] .staff-tab-badge { background: rgba(255,255,255,.18) !important; color: var(--paper) !important; }
+
+/* ── Allowance marks ────────────────────────────────────────────────────────
+   Shares the claim row's status treatment: a small solid mark plus a word, so
+   the four money states read the same everywhere in the product. */
+.state-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.state-mark::before { content: ""; width: .4375rem; height: .4375rem; flex: 0 0 auto; background: var(--quiet); }
+.state-mark--waiting::before { background: var(--waiting); }
+.state-mark--review::before { background: var(--review); }
+.state-mark--paid::before { background: var(--success); }
+.state-mark--refused::before { background: var(--refused); }
+.state-mark--idle::before { background: var(--rule-strong); }
+.state-mark--idle { color: var(--quiet); }
+
+.phase-mark {
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--quiet);
+}
+.phase-mark--active { color: var(--ink); font-weight: 500; }
+
+/* Native controls inside the allowance screens inherit the ink accent rather
+   than the browser's blue-or-green default. */
+.allowance-screen input[type="checkbox"] { accent-color: var(--ink); }
+.ledger-strip .allowance-dates { font-size: .9375rem; font-weight: 500; letter-spacing: 0; }
+/* A four-column strip on the placement page. */
+.allowance-screen .ledger-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 760px) { .allowance-screen .ledger-strip { grid-template-columns: 1fr; } }
 
 /* ── The ledger ──────────────────────────────────────────────────────────────
    A claim is a line item, and line items belong in a ruled column. The old

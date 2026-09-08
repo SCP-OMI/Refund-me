@@ -5,7 +5,6 @@ import {
   updateAllowanceMonth,
   updateWorkExperienceAllowance,
 } from "@/actions/work-experience-allowance"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -30,7 +29,8 @@ import {
   monthlyAllowanceAmount,
   workExperienceStatus,
 } from "@/lib/work-experience-allowance"
-import { ArrowLeft, CalendarDays, CircleDollarSign, History, UserRound } from "lucide-react"
+import { ArrowLeft, History } from "lucide-react"
+import { PhaseMark } from "@/components/staff/allowance-ui"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { FormEvent, useState, useTransition } from "react"
@@ -112,10 +112,10 @@ function MonthRow({ month, userId, onSaved }: { month: Month; userId: string; on
     <TableRow className="align-top">
       <TableCell className="font-medium">{monthFormatter.format(new Date(month.month))}</TableCell>
       <TableCell>
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={housing} onChange={(event) => setHousing(event.target.checked)} className="size-4 accent-emerald-600" />Housing</label>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={housing} onChange={(event) => setHousing(event.target.checked)} className="size-4" aria-label="Housing applies this month" /></label>
       </TableCell>
       <TableCell>
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={catering} onChange={(event) => setCatering(event.target.checked)} className="size-4 accent-emerald-600" />Catering</label>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={catering} onChange={(event) => setCatering(event.target.checked)} className="size-4" aria-label="Catering applies this month" /></label>
       </TableCell>
       <TableCell className="font-medium tabular-nums">{moneyFormatter.format(amount)} MAD</TableCell>
       <TableCell>
@@ -184,27 +184,45 @@ export function WorkExperienceStudentDetail({ initialStudent }: { initialStudent
   }
 
   return (
-    <div className="space-y-6">
-      <Link href="/staff/work-experience" className="inline-flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-950"><ArrowLeft className="size-4" />Back to allowance dashboard</Link>
+    <div className="page-shell allowance-screen">
+      <Link href="/staff/work-experience" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" />Back to allowance dashboard</Link>
 
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+      {/* Shared page heading, so this sits in the same frame as every other
+          screen. The teal eyebrow said "1337 Rabat · Work Experience I" above
+          a page that is only ever about that. */}
+      <div className="page-heading">
         <div>
-          <p className="text-sm font-medium text-emerald-700">1337 Rabat · Work Experience I</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">{student.name || student.login || "Unnamed student"}</h1>
-          <p className="mt-1 text-sm text-zinc-500">{student.login ? `@${student.login} · ` : ""}{student.email}</p>
+          <h1>{student.name || student.login || "Unnamed student"}</h1>
+          <p>{student.login ? `@${student.login} · ` : ""}{student.email}</p>
         </div>
-        <Badge variant="outline" className="w-fit text-sm">{status === "ACTIVE" ? "Active" : status === "ENDED" ? "Ended" : "Not started"}</Badge>
+        <span className="page-heading-note"><PhaseMark phase={status} /></span>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm"><div className="flex items-center gap-2 text-sm text-zinc-500"><UserRound className="size-4" />Student</div><p className="mt-3 font-medium text-zinc-950">{student.campus}</p><p className="text-sm text-zinc-500">Login: {student.login || "Not synced"}</p></div>
-        <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm"><div className="flex items-center gap-2 text-sm text-zinc-500"><CalendarDays className="size-4" />Timeline</div><p className="mt-3 font-medium text-zinc-950">{allowance?.startDate && allowance.endDate ? `${dateFormatter.format(new Date(allowance.startDate))} – ${dateFormatter.format(new Date(allowance.endDate))}` : "Dates require review"}</p><p className="text-sm text-zinc-500">Months are generated from these dates</p></div>
-        <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm"><div className="flex items-center gap-2 text-sm text-zinc-500"><CircleDollarSign className="size-4" />Current monthly allowance</div><p className="mt-3 text-xl font-semibold text-zinc-950">{moneyFormatter.format(amount)} MAD</p><p className="text-sm text-zinc-500">Calculated automatically</p></div>
-      </div>
+      {/* The ruled reading strip the rest of the product uses. These were
+          three bordered cards, each led by a decorative icon, and one of them
+          only restated the campus. */}
+      <section className="ledger-strip" aria-label="Placement summary">
+        <div>
+          <p className="plate">Placement</p>
+          <strong className="allowance-dates">
+            {allowance?.startDate && allowance.endDate
+              ? `${dateFormatter.format(new Date(allowance.startDate))} – ${dateFormatter.format(new Date(allowance.endDate))}`
+              : "Not set"}
+          </strong>
+        </div>
+        <div>
+          <p className="plate">Months generated</p>
+          <strong className="tnum">{allowance?.monthlyRecords.length ?? 0}</strong>
+        </div>
+        <div>
+          <p className="plate">Monthly allowance</p>
+          <strong className="tnum">{moneyFormatter.format(amount)}<em> MAD</em></strong>
+        </div>
+      </section>
 
-      <form onSubmit={submit} className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <h2 className="font-semibold text-zinc-950">Eligibility and Work Experience period</h2>
-        <p className="mt-1 text-sm text-zinc-500">Changes apply to unpaid current and future months. Previous and paid month snapshots are preserved.</p>
+      <form onSubmit={submit} className="rounded-md border border-border bg-white p-5">
+        <h2 className="font-semibold text-foreground">Eligibility and Work Experience period</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Changes apply to unpaid current and future months. Previous and paid month snapshots are preserved.</p>
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <div className="space-y-2"><Label htmlFor="start-date">Start date</Label><Input id="start-date" type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} /></div>
           <div className="space-y-2"><Label htmlFor="end-date">Expected/end date</Label><Input id="end-date" type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} /></div>
@@ -214,37 +232,37 @@ export function WorkExperienceStudentDetail({ initialStudent }: { initialStudent
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save allowance details"}</Button>
-          <span className="text-sm text-zinc-500">Total: <strong className="text-zinc-950">{moneyFormatter.format(amount)} MAD/month</strong></span>
-          {message && <span className="text-sm text-emerald-700">{message}</span>}
+          <span className="text-sm text-muted-foreground">Total: <strong className="text-foreground">{moneyFormatter.format(amount)} MAD/month</strong></span>
+          {message && <span className="text-sm text-foreground">{message}</span>}
           {error && <span className="text-sm text-red-700">{error}</span>}
         </div>
       </form>
 
-      <section className="rounded-xl border border-zinc-200 bg-white shadow-sm">
-        <div className="border-b border-zinc-200 p-5"><h2 className="font-semibold text-zinc-950">Monthly allowance and payment history</h2><p className="mt-1 text-sm text-zinc-500">Each month stores its own eligibility snapshot, expected amount, payment status, date, and notes.</p></div>
+      <section className="rounded-md border border-border bg-white">
+        <div className="border-b border-border p-5"><h2 className="font-semibold text-foreground">Monthly allowance and payment history</h2><p className="mt-1 text-sm text-muted-foreground">Each month stores its own eligibility snapshot, expected amount, payment status, date, and notes.</p></div>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader><TableRow><TableHead>Month</TableHead><TableHead>Housing</TableHead><TableHead>Catering</TableHead><TableHead>Expected</TableHead><TableHead>Status / payment date</TableHead><TableHead>Notes</TableHead><TableHead /></TableRow></TableHeader>
             <TableBody>
               {allowance?.monthlyRecords.map((month) => <MonthRow key={`${month.id}-${month.updatedAt}`} month={month} userId={student.id} onSaved={refresh} />)}
-              {!allowance?.monthlyRecords.length && <TableRow><TableCell colSpan={7} className="h-28 text-center text-zinc-500">Save a valid Work Experience start and end date to generate monthly records.</TableCell></TableRow>}
+              {!allowance?.monthlyRecords.length && <TableRow><TableCell colSpan={7} className="h-28 text-center text-muted-foreground">Save a valid Work Experience start and end date to generate monthly records.</TableCell></TableRow>}
             </TableBody>
           </Table>
         </div>
       </section>
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <div className="flex items-center gap-2"><History className="size-4 text-zinc-500" /><h2 className="font-semibold text-zinc-950">Eligibility and payment audit history</h2></div>
+      <section className="rounded-md border border-border bg-white p-5">
+        <div className="flex items-center gap-2"><History className="size-4 text-muted-foreground" /><h2 className="font-semibold text-foreground">Eligibility and payment audit history</h2></div>
         <div className="mt-4 space-y-3">
           {student.auditLogs.map((log) => (
-            <div key={log.id} className="rounded-lg border border-zinc-200 p-3 text-sm">
-              <div className="flex flex-wrap justify-between gap-2"><span className="font-medium text-zinc-900">{log.user.name || log.user.email} updated this allowance</span><time className="text-zinc-500">{dateFormatter.format(new Date(log.createdAt))}</time></div>
-              <p className="mt-1 text-xs text-zinc-500">{typeof log.details === "object" && log.details ? JSON.stringify(log.details) : "Update recorded"}</p>
+            <div key={log.id} className="rounded-md border border-border p-3 text-sm">
+              <div className="flex flex-wrap justify-between gap-2"><span className="font-medium text-foreground">{log.user.name || log.user.email} updated this allowance</span><time className="text-muted-foreground">{dateFormatter.format(new Date(log.createdAt))}</time></div>
+              <p className="mt-1 text-xs text-muted-foreground">{typeof log.details === "object" && log.details ? JSON.stringify(log.details) : "Update recorded"}</p>
             </div>
           ))}
-          {!student.auditLogs.length && <p className="text-sm text-zinc-500">No allowance changes have been recorded yet.</p>}
+          {!student.auditLogs.length && <p className="text-sm text-muted-foreground">No allowance changes have been recorded yet.</p>}
         </div>
-        {allowance && <p className="mt-4 text-xs text-zinc-400">Last updated {dateFormatter.format(new Date(allowance.updatedAt))}</p>}
+        {allowance && <p className="mt-4 text-xs text-muted-foreground">Last updated {dateFormatter.format(new Date(allowance.updatedAt))}</p>}
       </section>
     </div>
   )
