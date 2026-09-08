@@ -1,4 +1,4 @@
-.PHONY: dev build up down migrate studio seed logs clean help watch
+.PHONY: dev build up deploy down migrate studio seed logs clean help watch
 
 # Default target
 help:
@@ -7,6 +7,7 @@ help:
 	@echo "  make watch    - Start development environment with Docker Compose Watch"
 	@echo "  make build    - Build production images"
 	@echo "  make up       - Start production containers"
+	@echo "  make deploy   - Build and replace only the production app"
 	@echo "  make down      - Stop all containers"
 	@echo "  make migrate  - Create a new Prisma migration (interactive)"
 	@echo "  make studio   - Open Prisma Studio"
@@ -27,6 +28,10 @@ build:
 
 up:
 	docker compose up -d
+
+deploy:
+	docker compose build app
+	docker compose up -d --no-deps --no-build app
 
 down:
 	docker compose -f docker-compose.dev.yml down

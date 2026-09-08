@@ -125,6 +125,33 @@ npm start
 
 ## Troubleshooting
 
+### Compose `ContainerConfig` error
+
+Use the supported `docker compose` plugin. The Python `docker-compose` 1.29.2
+client fails when recreating containers on modern Docker Engine versions.
+Check the plugins with `docker compose version` and `docker buildx version`.
+On Ubuntu with the distribution packages, install them with:
+
+```bash
+sudo apt-get update
+sudo apt-get install docker-compose-v2 docker-buildx
+```
+
+### Updating production
+
+```bash
+make deploy
+```
+
+This builds the app while the existing container keeps serving, then replaces
+only the app with a brief restart. To run an image that is already built, use
+`docker compose up -d --no-deps --no-build app`.
+
+BuildKit caches npm downloads and Next.js build data. The first build after
+switching from the legacy builder needs a new cache; subsequent builds reuse it.
+The `.dockerignore` excludes local secrets, uploads, database backups, and
+generated output from the build context. Avoid `--no-cache` for routine updates.
+
 ### WebSocket "Connection Error"
 - Ensure `NEXT_PUBLIC_WS_URL` in `.env` matches your browser URL (usually `http://localhost:3000`).
 - Check if you are using the custom server (`npm run dev`) and not just `next dev`.

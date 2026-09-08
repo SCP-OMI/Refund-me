@@ -33,6 +33,7 @@ services:
 
   app:
     container_name: refund-med-app
+    image: refund_app:latest
     build:
       context: .
       dockerfile: Dockerfile

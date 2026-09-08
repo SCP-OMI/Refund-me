@@ -1,29 +1,33 @@
+# syntax=docker/dockerfile:1
 FROM node:20-bookworm-slim AS base
+
+# Prisma needs OpenSSL during both generation and Next.js builds.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
+# The runtime image installs system Chromium; npm must not download another copy.
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 # Dependencies stage - install all dependencies including dev dependencies
 FROM base AS deps
-RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Copy package files first for better layer caching
 COPY package.json package-lock.json* ./
-COPY prisma ./prisma/
 
 # Install all dependencies (including dev dependencies for build)
-RUN npm ci --ignore-scripts
+RUN --mount=type=cache,id=refund-npm,target=/root/.npm,sharing=locked npm ci --ignore-scripts --no-audit --no-fund
+COPY prisma ./prisma/
 RUN npx prisma generate
 
 # Production dependencies stage - only production dependencies
 FROM base AS prod-deps
-RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json* ./
-COPY prisma ./prisma/
 
 # Install only production dependencies
-RUN npm ci --omit=dev --ignore-scripts
+RUN --mount=type=cache,id=refund-npm,target=/root/.npm,sharing=locked npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+COPY prisma ./prisma/
 RUN npx prisma generate
 
 # Builder stage - build the application
@@ -49,14 +53,15 @@ COPY components.json ./
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN npm run build && npm run build:server
+RUN --mount=type=cache,id=refund-next,target=/app/.next/cache npm run build && npm run build:server
 
 FROM base AS runner
 WORKDIR /app
 
 # Install Chromium and dependencies for Puppeteer
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
+    ca-certificates \
     dumb-init \
     chromium \
     fonts-liberation \
