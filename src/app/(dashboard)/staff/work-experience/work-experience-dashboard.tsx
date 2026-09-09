@@ -178,7 +178,7 @@ export function WorkExperienceDashboard({ initialStudents }: { initialStudents: 
       const housing = allowance?.housingEligibility ?? "UNREVIEWED"
       const catering = allowance?.cateringEligibility ?? "UNREVIEWED"
       const payment = currentPayment(student)
-      const matchesSearch = !needle || [student.name, student.login, student.email]
+      const matchesSearch = !needle || [student.name, student.login, student.email, student.internshipCompany]
         .some((value) => value?.toLowerCase().includes(needle))
       if (!matchesSearch) return false
       if (filter === "UNREVIEWED") return housing === "UNREVIEWED" || catering === "UNREVIEWED"
@@ -241,7 +241,7 @@ export function WorkExperienceDashboard({ initialStudents }: { initialStudents: 
         <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by student name or login" className="pl-9" />
+            <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by student, login, or company" className="pl-9" />
           </div>
           <Select value={filter} onValueChange={(value) => setFilter(value as Filter)}>
             <SelectTrigger className="w-full bg-white sm:w-56"><SelectValue /></SelectTrigger>
@@ -268,6 +268,7 @@ export function WorkExperienceDashboard({ initialStudents }: { initialStudents: 
               <TableRow>
                 <TableHead>Student</TableHead>
                 <TableHead>Work Experience I</TableHead>
+                <TableHead>Company</TableHead>
                 <TableHead>Housing</TableHead>
                 <TableHead>Catering</TableHead>
                 <TableHead className="text-right">Monthly amount</TableHead>
@@ -305,6 +306,13 @@ export function WorkExperienceDashboard({ initialStudents }: { initialStudents: 
                         Since {dateFormatter.format(new Date(student.workExperienceStartedAt))}
                       </div>
                     </TableCell>
+                    <TableCell className="max-w-52 whitespace-normal font-medium text-foreground">
+                      {student.internshipCompany || (
+                        <span className="font-mono text-[0.6875rem] font-normal text-muted-foreground">
+                          Not available
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell><EligibilitySelect label={`Housing eligibility for ${student.name}`} value={housing} disabled={isPending && updatingId === student.id} onChange={(value) => changeEligibility(student, "housingEligibility", value)} /></TableCell>
                     <TableCell><EligibilitySelect label={`Catering eligibility for ${student.name}`} value={catering} disabled={isPending && updatingId === student.id} onChange={(value) => changeEligibility(student, "cateringEligibility", value)} /></TableCell>
                     <TableCell className="text-right">
@@ -329,7 +337,7 @@ export function WorkExperienceDashboard({ initialStudents }: { initialStudents: 
                   </TableRow>
                 )
               })}
-              {!filtered.length && <TableRow><TableCell colSpan={7} className="h-28 text-sm text-muted-foreground">No Rabat student matches these filters.</TableCell></TableRow>}
+              {!filtered.length && <TableRow><TableCell colSpan={8} className="h-28 text-sm text-muted-foreground">No Rabat student matches these filters.</TableCell></TableRow>}
             </TableBody>
           </Table>
         </div>

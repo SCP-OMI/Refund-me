@@ -37,6 +37,15 @@ type CursusUser = {
   end_at: string | null
 }
 
+type Internship = {
+  id: number
+  company_name: string | null
+  start_at: string | null
+  end_at: string | null
+  breach_at: string | null
+  user: { id: number }
+}
+
 export type RabatWorkExperienceStudent = {
   intraId: string
   email: string
@@ -47,6 +56,7 @@ export type RabatWorkExperienceStudent = {
   image: string | null
   commonCoreLevel: number
   workExperienceStartedAt: string
+  internshipCompany: string | null
 }
 
 type TokenCache = { token: string; expiresAt: number }
@@ -153,6 +163,38 @@ async function loadRabatWorkExperienceStudents() {
       .map((cursusUser) => [cursusUser.user.id, cursusUser]),
   )
 
+  // Internship records require the 42 "Companies manager" role. Keep the
+  // allowance screen usable when that role is not granted to the API app.
+  let internships: Internship[] = []
+  try {
+    internships = await getAllPages<Internship>(
+      `/v2/internships?filter[user_id]=${userIds}`,
+    )
+  } catch (error) {
+    console.warn("Could not load internship companies from the 42 API", error)
+  }
+
+  const now = Date.now()
+  const currentInternshipByUserId = new Map<number, Internship>()
+  for (const internship of internships) {
+    const start = internship.start_at ? new Date(internship.start_at).getTime() : Number.NaN
+    const end = internship.end_at ? new Date(internship.end_at).getTime() : Number.NaN
+    if (
+      internship.company_name?.trim() &&
+      !internship.breach_at &&
+      Number.isFinite(start) &&
+      Number.isFinite(end) &&
+      start <= now &&
+      now <= end
+    ) {
+      const previous = currentInternshipByUserId.get(internship.user.id)
+      const previousStart = previous?.start_at
+        ? new Date(previous.start_at).getTime()
+        : Number.NEGATIVE_INFINITY
+      if (start > previousStart) currentInternshipByUserId.set(internship.user.id, internship)
+    }
+  }
+
   return activeProjects
     .filter(({ user }) => completedCommonCore.has(user.id))
     .map(({ user, created_at }) => {
@@ -168,6 +210,8 @@ async function loadRabatWorkExperienceStudents() {
         image: user.image?.link ?? null,
         commonCoreLevel: completedCommonCore.get(user.id)!.level,
         workExperienceStartedAt: created_at,
+        internshipCompany:
+          currentInternshipByUserId.get(user.id)?.company_name?.trim() || null,
       }
     })
     .sort((left, right) => left.name.localeCompare(right.name))

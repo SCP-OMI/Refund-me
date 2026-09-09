@@ -40,7 +40,13 @@ function BrandMark() {
   )
 }
 
-export function Navbar({ initialRole }: { initialRole: string | null }) {
+export function Navbar({
+  initialRole,
+  hasWorkExperienceAccess,
+}: {
+  initialRole: string | null
+  hasWorkExperienceAccess: boolean
+}) {
   const pathname = usePathname()
   const router = useRouter()
   const { data: session } = useSession()
@@ -62,7 +68,11 @@ export function Navbar({ initialRole }: { initialRole: string | null }) {
     }
   }, [session])
 
-  const links = userRole === "STAFF" ? staffLinks : studentLinks
+  const links = userRole === "STAFF"
+    ? staffLinks.filter(
+        (link) => link.href !== "/staff/work-experience" || hasWorkExperienceAccess,
+      )
+    : studentLinks
 
   const isActive = (href: string) => {
     const isBase = href === "/staff" || href === "/student"

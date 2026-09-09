@@ -7,6 +7,7 @@ import {
   type RabatWorkExperienceStudent,
 } from "@/lib/forty-two-work-experience"
 import { prisma } from "@/lib/prisma"
+import { canAccessWorkExperience } from "@/lib/work-experience-access"
 import {
   EligibilityValue,
   monthStartsBetween,
@@ -47,10 +48,10 @@ async function requireStaff() {
 
   const staff = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, name: true, role: true },
+    select: { id: true, name: true, role: true, login: true },
   })
-  if (!staff || staff.role !== "STAFF") {
-    throw new Error("Unauthorized: Staff access required")
+  if (!staff || !canAccessWorkExperience(staff)) {
+    throw new Error("Unauthorized: Work experience access required")
   }
   return staff
 }
@@ -162,6 +163,7 @@ export async function getRabatAllowanceStudents() {
     ...student,
     commonCoreLevel: eligibleById.get(student.id)!.commonCoreLevel,
     workExperienceStartedAt: eligibleById.get(student.id)!.workExperienceStartedAt,
+    internshipCompany: eligibleById.get(student.id)!.internshipCompany,
     workExperienceAllowance: student.workExperienceAllowance
       ? serializeAllowance(student.workExperienceAllowance)
       : null,

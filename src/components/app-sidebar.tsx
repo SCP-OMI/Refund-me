@@ -31,6 +31,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useSession, signOut } from "@/lib/auth-client" // Using Better-Auth hooks
+import { canAccessWorkExperience } from "@/lib/work-experience-access"
 
 // Menu items.
 const studentItems = [
@@ -52,6 +53,9 @@ const staffItems = [
 export function AppSidebar() {
   const { data: session } = useSession()
   const user = session?.user
+  const canSeeWorkExperience = canAccessWorkExperience(
+    (user as { role?: string | null; login?: string | null } | undefined) ?? {},
+  )
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border/50 bg-background/60 backdrop-blur-xl">
@@ -92,16 +96,21 @@ export function AppSidebar() {
           <SidebarGroupLabel>Staff Workspace</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {staffItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild size="sm" tooltip={item.title} className="hover:bg-primary/10 hover:text-primary transition-colors">
-                    <a href={item.url}>
-                      <item.icon className="size-4" />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {staffItems
+                .filter(
+                  (item) =>
+                    item.url !== "/staff/work-experience" || canSeeWorkExperience,
+                )
+                .map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild size="sm" tooltip={item.title} className="hover:bg-primary/10 hover:text-primary transition-colors">
+                      <a href={item.url}>
+                        <item.icon className="size-4" />
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
