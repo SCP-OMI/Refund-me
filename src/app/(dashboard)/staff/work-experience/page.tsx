@@ -17,7 +17,7 @@ export default async function WorkExperienceAllowancePage() {
             allowance through to payment.
           </p>
         </div>
-        <span className="page-heading-note">Rabat · staff only</span>
+        <span className="page-heading-note">Campus 75 · active Work Experience I</span>
       </div>
 
       <WorkExperienceDashboard initialStudents={students} />

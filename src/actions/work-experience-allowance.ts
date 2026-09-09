@@ -2,6 +2,10 @@
 
 import { logActivity } from "@/lib/audit"
 import { auth } from "@/lib/auth"
+import {
+  getRabatWorkExperienceStudents,
+  type RabatWorkExperienceStudent,
+} from "@/lib/forty-two-work-experience"
 import { prisma } from "@/lib/prisma"
 import {
   EligibilityValue,
@@ -52,16 +56,54 @@ async function requireStaff() {
 }
 
 async function requireRabatStudent(userId: string) {
+  const eligibleStudents = await syncRabatWorkExperienceStudents()
+  const eligibleIds = new Set(eligibleStudents.map(({ id }) => id))
   const student = await prisma.user.findFirst({
-    where: {
-      id: userId,
-      role: "STUDENT",
-      campus: { equals: RABAT_CAMPUS, mode: "insensitive" },
-    },
+    where: { id: userId, role: "STUDENT" },
     select: { id: true, login: true, name: true, email: true, campus: true },
   })
-  if (!student) throw new Error("Student is not a 1337 Rabat student")
+  if (!student || !eligibleIds.has(student.id)) {
+    throw new Error("Student is not currently eligible for Work Experience I")
+  }
   return student
+}
+
+async function syncRabatWorkExperienceStudents() {
+  const fortyTwoStudents = await getRabatWorkExperienceStudents()
+  return prisma.$transaction(async (tx) => {
+    const synced: Array<{ id: string; profile: RabatWorkExperienceStudent }> = []
+    for (const profile of fortyTwoStudents) {
+      const existing = await tx.user.findFirst({
+        where: {
+          OR: [
+            { intraId: profile.intraId },
+            { login: profile.login },
+            { email: profile.email },
+          ],
+        },
+        select: { id: true, role: true },
+      })
+
+      // A staff identity must never be silently converted into a student.
+      if (existing?.role === "STAFF") continue
+      const data = {
+        intraId: profile.intraId,
+        login: profile.login,
+        email: profile.email,
+        name: profile.name,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        image: profile.image,
+        campus: RABAT_CAMPUS,
+        role: "STUDENT" as const,
+      }
+      const user = existing
+        ? await tx.user.update({ where: { id: existing.id }, data })
+        : await tx.user.create({ data })
+      synced.push({ id: user.id, profile })
+    }
+    return synced
+  })
 }
 
 function serializeAllowance(
@@ -91,10 +133,12 @@ function serializeAllowance(
 
 export async function getRabatAllowanceStudents() {
   await requireStaff()
+  const eligibleStudents = await syncRabatWorkExperienceStudents()
+  const eligibleById = new Map(eligibleStudents.map((student) => [student.id, student.profile]))
   const students = await prisma.user.findMany({
     where: {
+      id: { in: eligibleStudents.map(({ id }) => id) },
       role: "STUDENT",
-      campus: { equals: RABAT_CAMPUS, mode: "insensitive" },
     },
     select: {
       id: true,
@@ -103,6 +147,10 @@ export async function getRabatAllowanceStudents() {
       email: true,
       campus: true,
       image: true,
+      firstName: true,
+      lastName: true,
+      cin: true,
+      rib: true,
       workExperienceAllowance: {
         include: { monthlyRecords: { orderBy: { month: "asc" } } },
       },
@@ -112,6 +160,8 @@ export async function getRabatAllowanceStudents() {
 
   return students.map((student) => ({
     ...student,
+    commonCoreLevel: eligibleById.get(student.id)!.commonCoreLevel,
+    workExperienceStartedAt: eligibleById.get(student.id)!.workExperienceStartedAt,
     workExperienceAllowance: student.workExperienceAllowance
       ? serializeAllowance(student.workExperienceAllowance)
       : null,

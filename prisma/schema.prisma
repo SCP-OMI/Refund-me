@@ -64,6 +64,10 @@ model User {
   intraId       String?   @unique
   login         String?   @unique
   campus        String?
+  firstName     String?
+  lastName      String?
+  cin           String?
+  rib           String?
   role          Role      @default(STUDENT)
   
   requests      RefundRequest[]

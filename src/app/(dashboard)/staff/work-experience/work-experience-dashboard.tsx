@@ -11,6 +11,8 @@ import {
   formatAllowanceAmount,
 } from "@/components/staff/allowance-ui"
 import { Input } from "@/components/ui/input"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
@@ -29,9 +31,8 @@ import {
 import {
   EligibilityValue,
   monthlyAllowanceAmount,
-  workExperienceStatus,
 } from "@/lib/work-experience-allowance"
-import { Search } from "lucide-react"
+import { Download, Search } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMemo, useState, useTransition } from "react"
@@ -39,25 +40,21 @@ import { useMemo, useState, useTransition } from "react"
 type Student = Awaited<ReturnType<typeof getRabatAllowanceStudents>>[number]
 type Filter =
   | "ALL"
-  | "ACTIVE"
   | "UNREVIEWED"
   | "HOUSING"
   | "CATERING"
   | "BOTH"
   | "NEITHER"
   | "PENDING"
-  | "COMPLETED"
 
 const filterOptions: Array<{ value: Filter; label: string }> = [
   { value: "ALL", label: "All students" },
-  { value: "ACTIVE", label: "Active Work Experience" },
   { value: "UNREVIEWED", label: "Not reviewed" },
   { value: "HOUSING", label: "Housing eligible" },
   { value: "CATERING", label: "Catering eligible" },
   { value: "BOTH", label: "Both eligible" },
   { value: "NEITHER", label: "Neither eligible" },
   { value: "PENDING", label: "Payment pending" },
-  { value: "COMPLETED", label: "Completed" },
 ]
 
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -76,7 +73,30 @@ function currentPayment(student: Student) {
   return records.find((record) => record.month.startsWith(key)) ?? records.at(-1) ?? null
 }
 
+function currentMonthRecord(student: Student) {
+  const now = new Date()
+  const key = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`
+  return student.workExperienceAllowance?.monthlyRecords.find((record) =>
+    record.month.startsWith(key),
+  ) ?? null
+}
 
+function isEligibleThisMonth(student: Student) {
+  const month = currentMonthRecord(student)
+  if (month) return month.expectedAmount > 0
+  const allowance = student.workExperienceAllowance
+  return monthlyAllowanceAmount(
+    allowance?.housingEligibility ?? "UNREVIEWED",
+    allowance?.cateringEligibility ?? "UNREVIEWED",
+  ) > 0
+}
+
+function csvCell(value: string | null | undefined) {
+  let safe = value ?? ""
+  // Prevent spreadsheet applications from interpreting profile data as a formula.
+  if (/^[=+\-@]/.test(safe)) safe = `'${safe}`
+  return `"${safe.replace(/"/g, '""')}"`
+}
 
 function EligibilitySelect({
   value,
@@ -111,12 +131,38 @@ export function WorkExperienceDashboard({ initialStudents }: { initialStudents: 
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
+  const eligibleCount = useMemo(
+    () => students.filter(isEligibleThisMonth).length,
+    [students],
+  )
+
+  function exportEligibleStudents() {
+    const eligible = students.filter(isEligibleThisMonth)
+    const rows = eligible.map((student) => [
+      student.firstName,
+      student.lastName,
+      student.cin,
+      student.rib,
+      student.login,
+    ])
+    const csv = [
+      ["First name", "Last name", "CIN", "RIB", "Login"],
+      ...rows,
+    ].map((row) => row.map(csvCell).join(",")).join("\r\n")
+    const now = new Date()
+    const month = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`
+    const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }))
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `work-experience-eligible-${month}.csv`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  }
 
   const counts = useMemo(() => {
-    const active = students.filter((student) => {
-      const allowance = student.workExperienceAllowance
-      return allowance && workExperienceStatus(allowance.startDate, allowance.endDate) === "ACTIVE"
-    }).length
+    const active = students.length
     const unreviewed = students.filter((student) => {
       const allowance = student.workExperienceAllowance
       return !allowance || allowance.housingEligibility === "UNREVIEWED" || allowance.cateringEligibility === "UNREVIEWED"
@@ -131,19 +177,16 @@ export function WorkExperienceDashboard({ initialStudents }: { initialStudents: 
       const allowance = student.workExperienceAllowance
       const housing = allowance?.housingEligibility ?? "UNREVIEWED"
       const catering = allowance?.cateringEligibility ?? "UNREVIEWED"
-      const status = workExperienceStatus(allowance?.startDate ?? null, allowance?.endDate ?? null)
       const payment = currentPayment(student)
       const matchesSearch = !needle || [student.name, student.login, student.email]
         .some((value) => value?.toLowerCase().includes(needle))
       if (!matchesSearch) return false
-      if (filter === "ACTIVE") return status === "ACTIVE"
       if (filter === "UNREVIEWED") return housing === "UNREVIEWED" || catering === "UNREVIEWED"
       if (filter === "HOUSING") return housing === "ELIGIBLE"
       if (filter === "CATERING") return catering === "ELIGIBLE"
       if (filter === "BOTH") return housing === "ELIGIBLE" && catering === "ELIGIBLE"
       if (filter === "NEITHER") return housing === "NOT_ELIGIBLE" && catering === "NOT_ELIGIBLE"
       if (filter === "PENDING") return payment?.paymentStatus === "PENDING"
-      if (filter === "COMPLETED") return status === "ENDED"
       return true
     })
   }, [filter, search, students])
@@ -206,6 +249,16 @@ export function WorkExperienceDashboard({ initialStudents }: { initialStudents: 
               {filterOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={exportEligibleStudents}
+            disabled={eligibleCount === 0}
+            className="shrink-0"
+          >
+            <Download className="size-4" />
+            Export eligible ({eligibleCount})
+          </Button>
         </div>
         {error && <div className="border-b border-border px-4 py-3 text-sm text-destructive">{error}</div>}
 
@@ -228,25 +281,28 @@ export function WorkExperienceDashboard({ initialStudents }: { initialStudents: 
                 const housing = allowance?.housingEligibility ?? "UNREVIEWED"
                 const catering = allowance?.cateringEligibility ?? "UNREVIEWED"
                 const payment = currentPayment(student)
-                const status = workExperienceStatus(allowance?.startDate ?? null, allowance?.endDate ?? null)
                 return (
                   <TableRow key={student.id} className="align-top">
                     <TableCell>
-                      <Link href={`/staff/work-experience/${student.id}`} className="font-medium text-foreground underline-offset-4 hover:underline">
-                        {student.name || student.login || "Unnamed student"}
-                      </Link>
-                      {/* Campus was printed on every row of a page that is
-                          Rabat-only by definition. */}
-                      <div className="mt-0.5 font-mono text-[0.6875rem] text-muted-foreground">
-                        {student.login ? `@${student.login}` : student.email}
+                      <div className="flex items-center gap-3">
+                        <Avatar className="size-10 shrink-0 rounded-md">
+                          <AvatarImage className="object-cover" src={student.image || ""} alt={student.name || student.login || "Student"} />
+                          <AvatarFallback className="rounded-md">{(student.name || student.login || "?").slice(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <Link href={`/staff/work-experience/${student.id}`} className="font-medium text-foreground underline-offset-4 hover:underline">
+                            {student.name || student.login || "Unnamed student"}
+                          </Link>
+                          <div className="mt-0.5 font-mono text-[0.6875rem] text-muted-foreground">
+                            {student.login ? `@${student.login}` : student.email}
+                          </div>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <PhaseMark phase={status} />
+                      <PhaseMark phase="ACTIVE" />
                       <div className="mt-1 font-mono text-[0.6875rem] text-muted-foreground">
-                        {allowance?.startDate && allowance.endDate
-                          ? `${dateFormatter.format(new Date(allowance.startDate))} – ${dateFormatter.format(new Date(allowance.endDate))}`
-                          : "Dates require attention"}
+                        Since {dateFormatter.format(new Date(student.workExperienceStartedAt))}
                       </div>
                     </TableCell>
                     <TableCell><EligibilitySelect label={`Housing eligibility for ${student.name}`} value={housing} disabled={isPending && updatingId === student.id} onChange={(value) => changeEligibility(student, "housingEligibility", value)} /></TableCell>
